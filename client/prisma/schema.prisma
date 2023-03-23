@@ -1,0 +1,72 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model User {
+  id String @id @default(uuid())
+  email String @unique
+  name String
+  role Role
+  ownedTickets Ticket[] @relation("ownedTickets")
+  submittedTickets Ticket[] @relation("submittedTickets")
+  project Project? @relation(name: "members", fields: [projectId], references: [id])
+  projectId String?
+  managedProject Project[]
+}
+
+model Project {
+  id String @id @default(uuid())
+  name String
+  members User[] @relation(name: "members")
+  tickets Ticket[]
+  manager User @relation(fields: [managerId], references: [id])
+  managerId String
+}
+
+model Ticket {
+  id String @id @default(uuid())
+  title String
+  description String
+  urgency Urgency
+  status Status @default(OPEN)
+  type Type
+  createdAt DateTime @default(now())
+  developer User? @relation(name: "ownedTickets", fields: [developerId], references: id)
+  submitter User @relation(name: "submittedTickets", fields: [submitterId], references: [id])
+  project Project @relation(fields: [projectId], references: [id])
+  developerId String?
+  submitterId String
+  projectId String
+}
+
+enum Role {
+  USER
+  ADMIN
+  PROJECT_MANAGER
+}
+
+enum Status {
+  OPEN
+  CLOSED
+  IN_PROGRESS
+}
+
+enum Type {
+  FEATURE_REQUEST
+  BUG
+}
+
+enum Urgency {
+  LOW
+  MEDIUM
+  HIGH
+}
